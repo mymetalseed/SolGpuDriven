@@ -8,6 +8,7 @@ public class MeshSplitTools : MonoBehaviour
     [SerializeField]
     private MeshFilter mf;
     
+#if UNITY_EDITOR
     [ContextMenu("拆分SubMesh")]
     private void MeshSplit()
     {
@@ -53,4 +54,5 @@ public class MeshSplitTools : MonoBehaviour
             }
         }
     }
+#endif
 }

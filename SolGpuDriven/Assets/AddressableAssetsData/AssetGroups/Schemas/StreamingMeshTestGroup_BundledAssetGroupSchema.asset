@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e5d17a21594effb4e9591490b009e7aa, type: 3}
-  m_Name: Default Local Group_BundledAssetGroupSchema
+  m_Name: StreamingMeshTestGroup_BundledAssetGroupSchema
   m_EditorClassIdentifier: 
   m_Group: {fileID: 11400000, guid: 9d1f1ed14e10f55469743bd68e13397b, type: 2}
   m_InternalBundleIdMode: 1
@@ -37,7 +37,7 @@ MonoBehaviour:
     m_Id: 3806dd3f8442da5468505ad18749c117
   m_LoadPath:
     m_Id: c8959ac6284364d4a83ba85aeaea033b
-  m_BundleMode: 0
+  m_BundleMode: 1
   m_AssetBundleProviderType:
     m_AssemblyName: Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
     m_ClassName: UnityEngine.ResourceManagement.ResourceProviders.AssetBundleProvider
