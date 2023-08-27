@@ -1,0 +1,123 @@
+#pragma kernel Sort
+#pragma kernel SortSingleLevel
+#pragma kernel CopyAndFill
+#pragma kernel CopyBack
+
+#define GROUP_SIZE 512
+#define GROUPSHARED_SIZE (2*GROUP_SIZE)
+
+//For sorting kernels
+int count;
+int level;
+int single_level;
+RWStructuredBuffer<int> data;
+
+//For copying kernel
+int buffer_length;
+RWStructuredBuffer<int> copy;
+
+//线程组内同步,使用GroupMemoryBarrierWithGroupSync()方法来等待线程组全部执行完
+groupshared int gs_data[GROUPSHARED_SIZE];
+
+void SortLevelGroupshared(int top_level,int current_level,int idx,int gs_offset)
+{
+    //Get the two indices this thread needs to compare
+    int lower_idx = idx - gs_offset;
+    int upper_idx = (idx ^ current_level) - gs_offset;
+
+    //Perform the comparison
+    bool lower_le_upper = (gs_data[lower_idx] <= gs_data[upper_idx]);
+
+    //Write back in ascending or descending order?
+    bool ascending = !(top_level & idx);
+    bool in_order = (lower_le_upper == ascending);
+
+    //Swap values if out of order
+    int lower_val = gs_data[lower_idx];
+    int upper_val = gs_data[upper_idx];
+    gs_data[lower_idx] = (in_order) ? lower_val : upper_val;
+    gs_data[upper_idx] = (in_order) ? upper_val : lower_val;
+}
+
+void SortLevelGlobal(int top_level,int current_level,int idx)
+{
+    // Get the two indices this thread needs to compare.
+    int lower_idx = idx;
+    int upper_idx = idx ^ current_level;
+
+    // Perform the comparison.
+    bool lower_le_upper = (data[lower_idx] <= data[upper_idx]);
+
+    // Write back in ascending or descending order?
+    bool ascending = !(top_level & idx);
+    bool in_order = (lower_le_upper == ascending);
+
+    // Swap values if out of order.
+    int lower_val = data[lower_idx];
+    int upper_val = data[upper_idx];
+    data[lower_idx] = (in_order) ? lower_val : upper_val;
+    data[upper_idx] = (in_order) ? upper_val : lower_val;
+}
+
+// Remaps global thread ID to the lower index of each pairwise comparison
+// in a level.
+int RemapIndex(uint level, uint tid) {
+    int chunk_size = level;
+    int chunk_start = (tid / chunk_size) * level * 2;
+    return chunk_start + tid % chunk_size;
+}
+
+// See: https://en.wikipedia.org/wiki/Bitonic_sorter.
+// This implements the first diagram (sort direction depends on phase).
+//
+// In each phase, each thread handles a pairwise comparison and writes 
+// back both upper and lower indices of the pair. If we want to sort
+// n items we only need (n/2) threads.
+[numthreads(GROUP_SIZE,1,1)]
+void Sort(uint3 id: SV_DispatchThreadID, uint3 gid: SV_GroupID, uint3 gtid: SV_GroupThreadID) {
+    // Copy to groupshared.
+    int gs_offset = gid.x * GROUPSHARED_SIZE;
+    for (int i = gtid.x; gs_offset + i < count && i < GROUPSHARED_SIZE; i += GROUP_SIZE) {
+        gs_data[i] = data[gs_offset + i];
+    }
+    //先把每个Group的数据拷贝到groupshared容器中
+    GroupMemoryBarrierWithGroupSync();
+
+    // Sort in groupshared.
+    for (i = min(GROUP_SIZE, level >> 1); i > 0;  i >>= 1) {
+        if (id.x < (uint)count / 2) {
+            int idx = RemapIndex((uint)i, id.x);
+            SortLevelGroupshared(level, i, idx, gs_offset);
+        }
+        GroupMemoryBarrierWithGroupSync();
+    }
+
+    // Copy back to global.
+    for (i = gtid.x; gs_offset + i < count && i < GROUPSHARED_SIZE; i += GROUP_SIZE) {
+        data[gs_offset + i] = gs_data[i];
+    }
+}
+
+[numthreads(GROUP_SIZE,1,1)]
+void SortSingleLevel(uint3 id: SV_DispatchThreadID) {
+    if (id.x < (uint)count / 2) {
+        int idx = RemapIndex((uint)single_level, id.x);
+        SortLevelGlobal(level, single_level, idx);
+    }
+}
+
+[numthreads(GROUP_SIZE,1,1)]
+void CopyAndFill(uint3 id: SV_DispatchThreadID) {
+    if (id.x < (uint)count) {
+        copy[id.x] = data[id.x];
+    } else if (id.x < (uint)buffer_length) {
+        copy[id.x] = 0x7FFFFFFF; // INT_MAX
+    }
+}
+
+[numthreads(GROUP_SIZE,1,1)]
+void CopyBack(uint3 id: SV_DispatchThreadID) {
+    if (id.x < (uint)count) {
+        data[id.x] = copy[id.x];
+    }
+}

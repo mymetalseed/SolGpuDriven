@@ -1,0 +1,78 @@
+#pragma kernel ComputeLeaves
+#pragma kernel MarkUniqueLeaves
+#pragma kernel ComputeArgs
+#pragma kernel Subdivide
+
+#include "Morton.cginc"
+#include "OctreeCommon.cginc"
+
+#define INT_MAX 0x7FFFFFFF
+#define GROUP_SIZE 512
+
+RWBuffer<uint> args;
+
+int point_count;
+StructuredBuffer<float3> points;
+
+Buffer<uint> leaf_count;
+RWStructuredBuffer<int> leaves;
+RWStructuredBuffer<int> unique;
+
+int current_level;
+
+[numthreads(GROUP_SIZE,1,1)]
+void ComputeLeaves(uint3 id: SV_DispatchThreadID)
+{
+    if((int)id.x < point_count)
+    {
+        float3 leaf_size = size / (1<<max_depth);
+        int3 leaf_coords = (points[id.x] - min_corner) / leaf_size;
+        leaves[id.x] = in_bounds(leaf_coords) ? morton_encode(leaf_coords) : INT_MAX;
+    }
+}
+
+//标记唯一的叶子节点
+[numthreads(GROUP_SIZE,1,1)]
+void MarkUniqueLeaves(uint3 id : SV_DispatchThreadID)
+{
+    if((int)id.x < point_count)
+    {
+        int val = leaves[id.x];
+        int is_unique = (id.x == 0 || (val != leaves[id.x - 1] && (uint)val != INT_MAX));
+        unique[id.x] = is_unique;
+        //如果是unique的话,计数器加一
+        if(is_unique)
+        {
+            unique.IncrementCounter();
+        }
+    }
+}
+
+[numthreads(1,1,1)]
+void ComputeArgs(uint3 id: SV_DispatchThreadID)
+{
+    args[0] = ceil((float)args[0]/GROUP_SIZE);
+    args[1] = 1;
+    args[2] = 2;
+}
+
+[numthreads(GROUP_SIZE,1,1)]
+void Subdivide(uint3 id: SV_DispatchThreadID)
+{
+    if(id.x < leaf_count[0])
+    {
+        int leaf = leaves[id.x];
+        int3 leaf_coords = morton_decode(leaf);
+
+        int node;
+        int3 node_coords;
+        traverse(leaf_coords,current_level,node,node_coords);
+
+        int3 child_coords = get_child_coords(node_coords,current_level,leaf_coords);
+        if(activate_child(node,child_coords))
+        {
+            int child = nodes.IncrementCounter();
+            set_child(node,child,child_coords);
+        }
+    }
+}

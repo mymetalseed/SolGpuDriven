@@ -1,0 +1,26 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Compact
+#pragma kernel CopyBack
+
+#define GROUP_SIZE 512
+
+int count;
+StructuredBuffer<int> keys;
+StructuredBuffer<int> data;
+RWStructuredBuffer<int> output;
+
+[numthreads(GROUP_SIZE,1,1)]
+void Compact(uint3 id : SV_DispatchThreadID) {
+    if ((int)id.x < count) {
+        if (keys[id.x] != keys[id.x + 1]) {
+            output[keys[id.x]] = data[id.x];
+        }
+    }
+}
+
+[numthreads(GROUP_SIZE,1,1)]
+void CopyBack(uint3 id: SV_DispatchThreadID) {
+    if ((int)id.x < count) {
+        output[id.x] = data[id.x];
+    }
+}
