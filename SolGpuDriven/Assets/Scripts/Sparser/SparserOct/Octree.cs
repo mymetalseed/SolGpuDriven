@@ -82,15 +82,21 @@ namespace Sparser
             using(var keys = new CounterBuffer<int>(data.Length))
             using (var points = new StructuredBuffer<Vector3>(data.Length))
             {
+                //先把所有的顶点数据存到structuredBuffer中
                 points.SetData(data);
-                
+                //1. 最外圈包围盒大小
                 shader.SetFloats("size", bounds.size.x, bounds.size.y, bounds.size.z);
+                //三轴最小的那个顶点坐标
                 shader.SetFloats("min_corner", bounds.min.x, bounds.min.y, bounds.min.z);
+                //最大深度
                 shader.SetInt("max_depth", maxDepth);
+                //点的数量
                 shader.SetInt("point_count", data.Length);
-                
+                //设置叶子节点Buffer
                 shader.SetBuffer(computeLeavesKernel, "leaves", leaves.Buffer);
+                //设置顶点Buffer
                 shader.SetBuffer(computeLeavesKernel, "points", points.Buffer);
+                //执行叶子核的计算
                 shader.Dispatch(computeLeavesKernel, numGroupsX, 1, 1);
                 
                 sorter.Sort(leaves, data.Length);

@@ -46,6 +46,7 @@ int get_child(int node,int3 child_coords)
     return (nodes[node].child_flags & mask) ? nodes[node].children[code] : -1;
 }
 
+//确保在最大的包围盒范围内
 bool in_bounds(int3 coords)
 {
     int upper_bound = 1 << max_depth;

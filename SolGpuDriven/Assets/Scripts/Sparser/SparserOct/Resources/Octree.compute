@@ -20,13 +20,23 @@ RWStructuredBuffer<int> unique;
 
 int current_level;
 
+//第一个开始计算的核
+//这个节点计算完毕后,可以得到
 [numthreads(GROUP_SIZE,1,1)]
 void ComputeLeaves(uint3 id: SV_DispatchThreadID)
 {
+    //只有当线程的Id小于点的总数才会执行,线程Id一定是对应于总数量而言的
+    //比如这个计算中,首先确定核的大小(一个Group的大小,即GROUP_SIZE*1*1)
+    //外层C#中Dispatch的核的数量为 总Point数/group大小,向上取整
+    //那么第一个线程组处理0~512的顶点
+    //第二个线程组处理513~1024的顶点,所以这里可能越界,故做限制
     if((int)id.x < point_count)
     {
+        //根据深度计算叶子节点的大小(深度确定后,叶子节点大小也是确定的,这个是不依赖于八叉树的)
         float3 leaf_size = size / (1<<max_depth);
+        //根据叶子节点大小计算 和点的坐标来计算该点是处在哪个叶子内
         int3 leaf_coords = (points[id.x] - min_corner) / leaf_size;
+        //如果在最外层的bounds内,则计算该叶子的mortonCode,否则表示不在bounds内
         leaves[id.x] = in_bounds(leaf_coords) ? morton_encode(leaf_coords) : INT_MAX;
     }
 }

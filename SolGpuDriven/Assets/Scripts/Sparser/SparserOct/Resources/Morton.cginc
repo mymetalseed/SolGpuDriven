@@ -16,7 +16,7 @@ int deinterleave(int x) {
     x = (x ^ (x >> 16)) & 0x000003ff;
     return x;
 }
-
+//计算三维mortonCode
 int morton_encode(int3 coords) {
     int x = interleave(coords.x);
     int y = interleave(coords.y);
