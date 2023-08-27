@@ -10,6 +10,6 @@ http://146.56.209.11:90/2023/08/26/%e3%80%90ue-hpc%e3%80%91-%e7%a8%80%e7%96%8f%e
 
 
 
-![](Images\screenshot-20230827-200823.png)
+![](\Images\screenshot-20230827-200823.png)
 
-![](Images\screenshot-20230827-200724.png)
+![](\Images\screenshot-20230827-200724.png)
