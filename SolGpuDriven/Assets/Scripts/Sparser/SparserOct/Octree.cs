@@ -96,21 +96,22 @@ namespace Sparser
                 shader.SetBuffer(computeLeavesKernel, "leaves", leaves.Buffer);
                 //设置顶点Buffer
                 shader.SetBuffer(computeLeavesKernel, "points", points.Buffer);
-                //执行叶子核的计算
+                //执行叶子核的计算,这一层结束后,可以得到哪些节点是有元素的
                 shader.Dispatch(computeLeavesKernel, numGroupsX, 1, 1);
-                
+               
+                //排序-紧密阶段
                 sorter.Sort(leaves, data.Length);
                 
                 shader.SetBuffer(markUniqueLeavesKernel, "leaves", leaves.Buffer);
                 shader.SetBuffer(markUniqueLeavesKernel, "unique", keys.Buffer);
                 shader.Dispatch(markUniqueLeavesKernel, numGroupsX, 1, 1);
-
+                
                 compactor.Compact(leaves, keys, data.Length);
                 
                 keys.CopyCount(indirectArgs);
                 shader.SetBuffer(computeArgsKernel, "args", indirectArgs.Buffer);
                 shader.Dispatch(computeArgsKernel, 1, 1, 1);
-
+                
                 keys.CopyCount(leafCount);
                 shader.SetBuffer(subdivideKernel, "leaf_count", leafCount.Buffer);
                 shader.SetBuffer(subdivideKernel, "leaves", leaves.Buffer);
