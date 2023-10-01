@@ -683,6 +683,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   terrain: {fileID: 1824498102}
+  EnableRVTUpdate: 1
+  EnableUseRVTLit: 1
+  EnableVTCompression: 0
+  regionRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1024
+    height: 1024
+  drawTextureMaterial: {fileID: 2100000, guid: 8f03e73f7fc9abe4a97c75a7a428d130, type: 2}
+  flipMaterial: {fileID: 2100000, guid: f1ba0adc56b98964187eb07c39aad264, type: 2}
+  albedoTileRT: {fileID: 0}
+  normalTileRT: {fileID: 0}
 --- !u!114 &1599995300
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -695,8 +708,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c622c0fd47e42809a4e3b375573668a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  regionSize: {x: 10, y: 10}
   tileSize: 1024
   boundSize: 4
+  VTs: []
+  compressShader: {fileID: 0}
 --- !u!114 &1599995301
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -710,6 +726,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tableSize: 64
+  debugMaterial: {fileID: 2100000, guid: 027f258998a3cee4da868111678a427c, type: 2}
+  _lookupTexture: {fileID: 0}
 --- !u!1 &1824498100
 GameObject:
   m_ObjectHideFlags: 0

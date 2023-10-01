@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Mat_Terrain
-  m_Shader: {fileID: 4800000, guid: 878908f545f342b3bf9319b45582b9c5, type: 3}
+  m_Shader: {fileID: 4800000, guid: 8b416fcfd6f1b264ebcce4bcdae04fe4, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
